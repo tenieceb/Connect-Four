@@ -11,6 +11,19 @@
     </style>
 </HeadContent>
 
+
+<article>
+    <h3>Win Streaks</h3>
+    <p>Player 1 (Green): @player1Wins</p>
+    <p>Player 2 (Purple): @player2Wins</p>
+
+    @winnerMessage
+    <button style="@ResetStyle" @onclick="ResetGame">Reset the game</button>
+    <br />
+    <span class="alert-danger">@errorMessage</span>
+    <span class="alert-info">@CurrentTurn</span>
+</article>
+
 <nav>
     @for (byte i = 0; i < 7; i++)
     {
@@ -18,13 +31,6 @@
         <span title="Click to play a piece" @onclick="() => PlayPiece(col)">🔽</span>
     }
 </nav>
-
-<article>
-    @winnerMessage  <button style="@ResetStyle" @onclick="ResetGame">Reset the game</button>
-    <br />
-    <span class="alert-danger">@errorMessage</span>
-    <span class="alert-info">@CurrentTurn</span>
-</article>
 
 <div>
     <div class="board">
@@ -47,11 +53,18 @@
     private string winnerMessage = string.Empty;
     private string errorMessage = string.Empty;
 
+    private int player1Wins = 0;
+    private int player2Wins = 0;
+
     private string CurrentTurn => (winnerMessage == string.Empty) ? $"Player {State.PlayerTurn}'s Turn" : "";
     private string ResetStyle => (winnerMessage == string.Empty) ? "display: none;" : "";
 
     private void PlayPiece(byte col)
     {
+        if (winnerMessage != string.Empty)
+        {
+            return;
+        }
         try
         {
             var player = State.PlayerTurn;
@@ -63,13 +76,31 @@
         {
             errorMessage = ex.Message;
         }
-        winnerMessage = State.CheckForWin() switch
+        var result = State.CheckForWin();
+
+        winnerMessage = result switch
         {
             GameState.WinState.Player1_Wins => "Player 1 Wins!",
             GameState.WinState.Player2_Wins => "Player 2 Wins!",
             GameState.WinState.Tie => "It's a tie!",
             _ => ""
         };
+
+        if (result == GameState.WinState.Player1_Wins)
+        {
+            player1Wins++;
+            player2Wins = 0;
+        }
+        else if (result == GameState.WinState.Player2_Wins)
+        {
+            player2Wins++;
+            player1Wins = 0;
+        }
+        else if (result == GameState.WinState.Tie)
+        {
+            player1Wins = 0;
+            player2Wins = 0;
+        }
     }
 
     [Parameter]
